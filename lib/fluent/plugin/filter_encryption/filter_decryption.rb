@@ -1,12 +1,14 @@
 require 'fluent/filter'
 require 'digest/md5'
 require 'encryptor'
+require 'base64'
 
 module Fluent
   class DecryptionFilter < Filter
     Fluent::Plugin.register_filter('decryption', self)
     config_param :passphrase, :string, secret: true
     config_param :field, :string, default: 'ALL'
+    config_param :algorithm, :string, default: 'aes-256-cbc'
     
     def configure(conf)
       super
@@ -25,9 +27,10 @@ module Fluent
       fields = @field.split(',')
       record.map {|k, v|
         if check_encfield(k, fields)
-          salt = v[0,8]
-          encrypted_text = v[8, v.size]
-          [k, Encryptor.decrypt(value: encrypted_text, key: @key, iv: @iv, salt: salt)]
+          uv = Base64.decode64(v)
+          salt = uv[0,8]
+          encrypted_text = uv[8, uv.size]
+          [k, Encryptor.decrypt(algorithm: @algorithm, value: encrypted_text, key: @key, iv: @iv, salt: salt)]
         else
           [k, v]
         end
