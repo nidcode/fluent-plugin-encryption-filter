@@ -1,4 +1,0 @@
-require_relative '../helper'
-require 'fluent/test/driver/filter'
-require 'fluent/plugin/filter_record_transformer'
-require 'flexmock/test_unit'
